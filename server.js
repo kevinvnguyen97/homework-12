@@ -1,9 +1,6 @@
-var express = require("express");
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 var cTable = require("console.table");
-
-var app = express();
 
 var connection = mysql.createConnection({
   host: "localhost",
@@ -43,7 +40,7 @@ function mainMenu() {
         "Add Role",
         "Edit Role",
         "View All Departments",
-        "Add Departments",
+        "Add Department",
         "EXIT APPLICATION"
       ]
     }
@@ -70,11 +67,11 @@ function mainMenu() {
         break;
 
       case "Update Employee Role":
-        //updateEmployee();
+        updateEmployeeRole();
         break;
       
       case "Update Employee Manager":
-        //updateManager();
+        updateEmployeeManager();
         break;
 
       case "View All Roles":
@@ -86,10 +83,15 @@ function mainMenu() {
         break;
 
       case "Edit Role":
+        editRole();
         break;
       
       case "View All Departments":
         viewDepartments();
+        break;
+      
+      case "Add Department":
+        addDepartment();
         break;
 
       default:
@@ -176,6 +178,68 @@ function viewEmployees(sortBy) {
   });
 }
 
+function updateEmployeeRole() {
+  inquirer.prompt([
+    {
+      type: "number",
+      message: "Enter employee id to update employee's role id:",
+      name: "employeeId"
+    },
+
+    {
+      type: "number",
+      message: "Enter new role id for selected employee:",
+      name: "employeeRoleId"
+    }
+  ]).then(function(response) {
+    connection.query(
+      "UPDATE employee SET ? WHERE ?",
+      [
+        {role_id: response.employeeRoleId},
+        {id: response.employeeId}
+      ],
+      function(err, res) {
+        if (err) throw err;
+        console.log();
+        console.log("Employee role updated!");
+        console.log();
+        mainMenu();
+      }
+    );
+  });
+}
+
+function updateEmployeeManager() {
+  inquirer.prompt([
+    {
+      type: "number",
+      message: "Enter employee id to update employee's manager id:",
+      name: "employeeId"
+    },
+
+    {
+      type: "number",
+      message: "Enter new manager id for selected employee:",
+      name: "employeeManagerId"
+    }
+  ]).then(function(response) {
+    connection.query(
+      "UPDATE employee SET ? WHERE ?",
+      [
+        {manager_id: response.employeeManagerId},
+        {id: response.employeeId}
+      ],
+      function(err, res) {
+        if (err) throw err;
+        console.log();
+        console.log("Updated employee's manager id!");
+        console.log();
+        mainMenu();
+      }
+    )
+  });
+}
+
 function removeEmployee() {
   inquirer.prompt([
     {
@@ -192,7 +256,7 @@ function removeEmployee() {
       function(err, res) {
         if (err) throw err;
         console.log();
-        console.log("Employee deleted!");
+        console.log(res.changedRows + "Employee deleted!");
         console.log();
         mainMenu();
       });
@@ -245,21 +309,114 @@ function viewRoles() {
   });
 }
 
-// function editRole() {
+function editRole() {
+  inquirer.prompt([
+    {
+      type: "number",
+      message: "Enter role id to edit:",
+      name: "roleId"
+    },
 
-// }
+    {
+      type: "confirm",
+      message: "Edit role name?:",
+      name: "changeRoleName"
+    },
 
-// function addDepartment() {
-//   inquirer.prompt([
-//     {
-//       type: "input",
-//       message: "Enter department name:",
-//       name: "departmentName"
-//     }
-//   ]).then(function(response) {
-//     addDepartment(response.name);
-//   });
-// }
+    {
+      type: "input",
+      message: "Enter new role name:",
+      name: "newRoleName",
+      when: function(response) {
+        return response.changeRoleName;
+      }
+    },
+
+    {
+      type: "confirm",
+      message: "Edit role salary?:",
+      name: "changeRoleSalary"
+    },
+
+    {
+      type: "number",
+      message: "Enter new role salary:",
+      name: "newRoleSalary",
+      when: function(response) {
+        return response.changeRoleSalary;
+      }
+    },
+
+    {
+      type: "confirm",
+      message: "Edit role department id?:",
+      name: "changeRoleDepartmentId"
+    },
+
+    {
+      type: "input",
+      message: "Enter new role department id:",
+      name: "newRoleDepartmentId",
+      when: function(response) {
+        return response.changeRoleDepartmentId;
+      }
+    }
+  ]).then(function(response) {
+    var updateCols = {};
+
+    if (response.changeRoleName) {
+      updateCols["title"] = response.newRoleName;
+      console.log(updateCols);
+    }
+
+    if (response.changeRoleSalary) {
+      updateCols["salary"] = response.newRoleSalary;
+      console.log(updateCols);
+    }
+
+    if (response.changeRoleDepartmentId) {
+      updateCols["department_id"] = response.newRoleDepartmentId;
+      console.log(updateCols);
+    }
+
+    connection.query(
+      "UPDATE role SET ? WHERE ?",
+      [
+        updateCols,
+        {id: response.roleId}
+      ],
+      function(err, res) {
+        if (err) throw err;
+        console.log();
+        console.log("Updated role!");
+        console.log();
+        mainMenu();
+      });
+  });
+}
+
+function addDepartment() {
+  inquirer.prompt([
+    {
+      type: "input",
+      message: "Enter department name:",
+      name: "departmentName"
+    }
+  ]).then(function(response) {
+    connection.query(
+      "INSERT INTO department SET ?",
+      {
+        name: response.departmentName
+      },
+      function(err, res) {
+        if (err) throw err;
+        console.log();
+        console.log("New department added!");
+        console.log();
+        mainMenu();
+      });
+  });
+}
 
 function viewDepartments() {
   connection.query("SELECT * FROM department", function(err, res) {
@@ -268,52 +425,3 @@ function viewDepartments() {
     mainMenu();
   });
 }
-// function updateProduct() {
-//   console.log("Updating all Rocky Road quantities...\n");
-//   var query = connection.query(
-//     "UPDATE products SET ? WHERE ?",
-//     [
-//       {
-//         quantity: 100
-//       },
-//       {
-//         flavor: "Rocky Road"
-//       }
-//     ],
-//     function(err, res) {
-//       if (err) throw err;
-//       console.log(res.affectedRows + " products updated!\n");
-//       // Call deleteProduct AFTER the UPDATE completes
-//       deleteProduct();
-//     }
-//   );
-
-//   // logs the actual query being run
-//   console.log(query.sql);
-// }
-
-// function deleteProduct() {
-//   console.log("Deleting all strawberry icecream...\n");
-//   connection.query(
-//     "DELETE FROM products WHERE ?",
-//     {
-//       flavor: "strawberry"
-//     },
-//     function(err, res) {
-//       if (err) throw err;
-//       console.log(res.affectedRows + " products deleted!\n");
-//       // Call readProducts AFTER the DELETE completes
-//       readProducts();
-//     }
-//   );
-// }
-
-// function readProducts() {
-//   console.log("Selecting all products...\n");
-//   connection.query("SELECT * FROM products", function(err, res) {
-//     if (err) throw err;
-//     // Log all results of the SELECT statement
-//     console.log(res);
-//     connection.end();
-//   });
-// }
