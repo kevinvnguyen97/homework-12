@@ -1,6 +1,7 @@
 var express = require("express");
 var mysql = require("mysql");
 var inquirer = require("inquirer");
+var cTable = require("console.table");
 
 var app = express();
 
@@ -21,7 +22,7 @@ var connection = mysql.createConnection({
 connection.connect(function(err) {
   if (err) throw err;
   console.log("connected as id " + connection.threadId + "\n");
-  createProduct();
+  mainMenu();
 });
 
 function mainMenu() {
@@ -31,65 +32,71 @@ function mainMenu() {
       message: "Choose:",
       name: "userChoice",
       choices: [
-        "Employee",
-        "Role",
-        "Department"
+        "View All Employees",
+        "View All Employees By Department",
+        "View All Employees By Manager",
+        "Add Employee",
+        "Remove Employee",
+        "Update Employee Role",
+        "Update Employee Manager",
+        "View All Roles",
+        "Add Role",
+        "Edit Role",
+        "View All Departments",
+        "Add Departments",
+        "EXIT APPLICATION"
       ]
     }
   ]).then(function(response) {
     switch(response.userChoice) {
-      case "Employee":
-        employeePrompt();
+      case "View All Employees":
+        viewEmployees("employee");
         break;
 
-      case "Role":
-        rolePrompt();
+      case "View All Employees By Department":
+        viewEmployees("department");
         break;
 
-      case "Department":
-        departmentPrompt();
+      case "View All Employees By Manager":
+        viewEmployees("manager");
         break;
 
-      default:
-        break;
-    }
-  });
-}
-
-function employeePrompt() {
-  inquirer.prompt([
-    {
-      type: "list",
-      message: "Choose actions:",
-      name: "userChoice",
-      choices: [
-        "Add employee",
-        "View employee",
-        "Edit employee role"
-      ]
-    }
-  ]).then(function(response) {
-    switch(response.userChoice) {
-      case "Add employee":
+      case "Add Employee":
         addEmployee();
         break;
-      
-      case "View employee":
-        viewEmployee();
+
+      case "Remove Employee":
+        removeEmployee();
         break;
 
-      case "Edit employee role":
-        editEmployeeRole();
+      case "Update Employee Role":
+        //updateEmployee();
+        break;
+      
+      case "Update Employee Manager":
+        //updateManager();
+        break;
+
+      case "View All Roles":
+        viewRoles();
+        break;
+
+      case "Add Role":
+        addRole();
+        break;
+
+      case "Edit Role":
+        break;
+      
+      case "View All Departments":
+        viewDepartments();
         break;
 
       default:
+        throw new Error("Application terminated.");
         break;
     }
   });
-}
-
-function viewEmployee() {
-
 }
 
 function addEmployee() {
@@ -101,8 +108,8 @@ function addEmployee() {
     },
 
     {
-      type: "input",
-      message: "Enter role: ",
+      type: "number",
+      message: "Enter role id: ",
       name: "employeeRole"
     },
 
@@ -113,47 +120,82 @@ function addEmployee() {
     },
 
     {
-      type: "input",
-      message: "Enter manager name (first last):",
-      name: "managerName",
+      type: "number",
+      message: "Enter manager id:",
+      name: "managerId",
       when: function(response) {
         return response.hasManager;
       }
     }
   ]).then(function(response) {
-    
+    response.employeeName = response.employeeName.split(" ");
+    connection.query(
+      "INSERT INTO employee SET ?",
+      {
+        first_name: response.employeeName[0],
+        last_name: response.employeeName[1],
+        role_id: response.employeeRole,
+        manager_id: response.managerId
+      },
+      function(err, res) {
+        if(err) throw err;
+        console.log();
+        console.log("New employee added!");
+        console.log();
+        mainMenu();
+      }
+    );
   });
 }
 
-function rolePrompt() {
+function viewEmployees(sortBy) {
+  var queryName =
+    "(SELECT employee.*, role.title, role.salary, department.name FROM (" +
+    "(employee INNER JOIN role ON employee.role_id = role.id) " +
+    "INNER JOIN department ON role.department_id = department.id)) ";
+
+  switch(sortBy.toLowerCase()) {
+    case "employee":
+      queryName += "ORDER BY employee.id;";
+      break;
+
+    case "department":
+      queryName += "ORDER BY department.id";
+      break;
+
+    case "manager":
+      queryName += "ORDER BY employee.manager_id";
+      break;
+  }
+
+  connection.query(queryName, function(err, res) {
+    if (err) throw err;
+    console.log();
+    console.table(res);
+    mainMenu();
+  });
+}
+
+function removeEmployee() {
   inquirer.prompt([
     {
-      type: "list",
-      message: "Choose actions:",
-      name: "userChoice",
-      choices: [
-        "Add role",
-        "View role",
-        "Edit role"
-      ]
+      type: "number",
+      message: "Enter id of employee to remove:",
+      name: "removeEmployeeId"
     }
   ]).then(function(response) {
-    switch(response.userChoice) {
-      case "Add role":
-        addRole();
-        break;
-
-      case "View role":
-        viewRole();
-        break;
-
-      case "Edit role":
-        editRole();
-        break;
-
-      default:
-        break;
-    }
+    connection.query(
+      "DELETE FROM employee WHERE ?",
+      {
+        id: response.removeEmployeeId
+      },
+      function(err, res) {
+        if (err) throw err;
+        console.log();
+        console.log("Employee deleted!");
+        console.log();
+        mainMenu();
+      });
   });
 }
 
@@ -173,63 +215,59 @@ function addRole() {
 
     {
       type: "input",
-      message: "Enter department:",
-      name: "roleDepartment"
+      message: "Enter department id:",
+      name: "departmentId"
     }
   ]).then(function(response) {
-    
+    connection.query(
+      "INSERT INTO role SET ?",
+      {
+        title: response.roleName,
+        salary: response.roleSalary,
+        department_id: response.departmentId
+      },
+      function(err, res) {
+        if (err) throw err;
+        console.log();
+        console.log("New role added!");
+        console.log();
+        mainMenu();
+      }
+    );
   });
 }
 
-function viewRole() {
-
-}
-
-function editRole() {
-
-}
-
-function departmentPrompt() {
-  inquirer.prompt([
-    {
-      type: "list",
-      message: "Choose:",
-      name: "userChoice",
-      choices: [
-        "Add department",
-        "View departments"
-      ]
-    }
-  ]).then(function(response) {
-    switch(response.choice) {
-      case "Add department":
-        addDepartment();
-        break;
-      case "View departments":
-        viewDepartments();
-        break;
-      default:
-        break;
-    }
+function viewRoles() {
+  connection.query("SELECT * FROM role", function(err, res) {
+    if (err) throw err;
+    console.table(res);
+    mainMenu();
   });
 }
 
-function addDepartment() {
-  inquirer.prompt([
-    {
-      type: "input",
-      message: "Enter department name:",
-      name: "departmentName"
-    }
-  ]).then(function(response) {
-    addDepartment(response.name);
-  });
-}
+// function editRole() {
+
+// }
+
+// function addDepartment() {
+//   inquirer.prompt([
+//     {
+//       type: "input",
+//       message: "Enter department name:",
+//       name: "departmentName"
+//     }
+//   ]).then(function(response) {
+//     addDepartment(response.name);
+//   });
+// }
 
 function viewDepartments() {
-  
+  connection.query("SELECT * FROM department", function(err, res) {
+    if (err) throw err;
+    console.table(res);
+    mainMenu();
+  });
 }
-
 // function updateProduct() {
 //   console.log("Updating all Rocky Road quantities...\n");
 //   var query = connection.query(
