@@ -42,101 +42,101 @@ function addRole() {
 }
 
 function viewRoles() {
-    server.connection.query("SELECT * FROM role", function (err, res) {
+    server.connection.query("(SELECT role.id, role.title, role.salary, department.name AS department FROM (role LEFT JOIN department ON role.department_id = department.id))", function (err, res) {
         if (err) throw err;
         console.table(res);
         mainPrompt.mainMenu();
     });
 }
 
+// server.connection.query("SELECT role.title from role", function(err, res) {
+//     if (err) throw err;
+//     console.log(res);
+// });
+
 function editRole() {
-    inquirer.prompt([
-        {
-            type: "number",
-            message: "Enter role id to edit:",
-            name: "roleId"
-        },
+    server.connection.query("SELECT role.title from role", function(err, res) {
+        if (err) throw err;
+        console.log(res);
 
-        {
-            type: "confirm",
-            message: "Edit role name?:",
-            name: "changeRoleName"
-        },
+        var roleChoices = [];
 
-        {
-            type: "input",
-            message: "Enter new role name:",
-            name: "newRoleName",
-            when: function (response) {
-                return response.changeRoleName;
+        res.forEach(roleObj => roleChoices.push(roleObj.title));
+
+        console.log(roleChoices);
+
+        inquirer.prompt([
+            {
+                type: "list",
+                message: "Select role to edit:",
+                name: "roleTitle",
+                choices: roleChoices
+            },
+    
+            {
+                type: "confirm",
+                message: "Edit role name?:",
+                name: "changeRoleName"
+            },
+    
+            {
+                type: "input",
+                message: "Enter new role name:",
+                name: "newRoleName",
+                when: function (response) {
+                    return response.changeRoleName;
+                }
+            },
+    
+            {
+                type: "confirm",
+                message: "Edit role salary?:",
+                name: "changeRoleSalary"
+            },
+    
+            {
+                type: "number",
+                message: "Enter new role salary:",
+                name: "newRoleSalary",
+                when: function (response) {
+                    return response.changeRoleSalary;
+                }
+            },
+    
+            {
+                type: "confirm",
+                message: "Edit role department id?:",
+                name: "changeRoleDepartmentId"
+            },
+    
+            {
+                type: "input",
+                message: "Enter new role department id:",
+                name: "newRoleDepartmentId",
+                when: function (response) {
+                    return response.changeRoleDepartmentId;
+                }
             }
-        },
-
-        {
-            type: "confirm",
-            message: "Edit role salary?:",
-            name: "changeRoleSalary"
-        },
-
-        {
-            type: "number",
-            message: "Enter new role salary:",
-            name: "newRoleSalary",
-            when: function (response) {
-                return response.changeRoleSalary;
-            }
-        },
-
-        {
-            type: "confirm",
-            message: "Edit role department id?:",
-            name: "changeRoleDepartmentId"
-        },
-
-        {
-            type: "input",
-            message: "Enter new role department id:",
-            name: "newRoleDepartmentId",
-            when: function (response) {
-                return response.changeRoleDepartmentId;
-            }
-        }
-    ]).then(function (response) {
-        var updateCols = {};
-
-        if (response.changeRoleName) {
-            updateCols["title"] = response.newRoleName;
-            console.log(updateCols);
-        }
-
-        if (response.changeRoleSalary) {
-            updateCols["salary"] = response.newRoleSalary;
-            console.log(updateCols);
-        }
-
-        if (response.changeRoleDepartmentId) {
-            updateCols["department_id"] = response.newRoleDepartmentId;
-            console.log(updateCols);
-        }
-
-        server.connection.query(
-            "UPDATE role SET ? WHERE ?",
-            [
-                updateCols,
-                { id: response.roleId }
-            ],
-            function (err, res) {
-                if (err) throw err;
-                console.log();
-                console.log("Updated role!");
-                console.log();
-                mainPrompt.mainMenu();
-            });
+        ]).then(function (response) {
+            var updateCols = {};
+    
+            if (response.changeRoleName) updateCols["title"] = response.newRoleName;
+            if (response.changeRoleSalary) updateCols["salary"] = response.newRoleSalary;
+            if (response.changeRoleDepartmentId) updateCols["department_id"] = response.newRoleDepartmentId;
+    
+            server.connection.query(
+                "UPDATE role SET ? WHERE ?",
+                [updateCols, { title: response.roleTitle }],
+                function (err, res) {
+                    if (err) throw err;
+                    console.log();
+                    console.log("Updated role!");
+                    console.log();
+                    mainPrompt.mainMenu();
+                }
+            );
+        });
     });
 }
 
-module.exports = {
-    addRole: addRole,
-    viewRoles: viewRoles,
-    editRole: editRole,
-}
+module.exports = {addRole, viewRoles, editRole}

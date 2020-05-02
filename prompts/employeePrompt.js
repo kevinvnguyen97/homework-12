@@ -33,7 +33,7 @@ function addEmployee() {
         }
     ]).then(function (response) {
         response.employeeName = response.employeeName.split(" ");
-        connection.query(
+        server.connection.query(
             "INSERT INTO employee SET ?",
             {
                 first_name: response.employeeName[0],
@@ -54,7 +54,8 @@ function addEmployee() {
 
 function viewEmployees(sortBy) {
     var queryName =
-        "(SELECT employee.*, role.title, role.salary, department.name FROM (" +
+        "(SELECT employee.id, employee.first_name, employee.last_name, employee.manager_id, " +
+        "role.title AS role, role.salary, department.name AS department_name FROM (" +
         "(employee INNER JOIN role ON employee.role_id = role.id) " +
         "INNER JOIN department ON role.department_id = department.id)) ";
 
@@ -166,9 +167,6 @@ function removeEmployee() {
 }
 
 module.exports = {
-    addEmployee: addEmployee,
-    viewEmployees: viewEmployees,
-    updateEmployeeRole: updateEmployeeRole,
-    updateEmployeeManager: updateEmployeeManager,
-    removeEmployee: removeEmployee
+    addEmployee, viewEmployees, updateEmployeeRole,
+    updateEmployeeManager, removeEmployee
 }

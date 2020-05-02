@@ -11,7 +11,7 @@ function addDepartment() {
             name: "departmentName"
         }
     ]).then(function (response) {
-        connection.query(
+        server.connection.query(
             "INSERT INTO department SET ?",
             {
                 name: response.departmentName
@@ -35,6 +35,5 @@ function viewDepartments() {
 }
 
 module.exports = {
-    addDepartment: addDepartment,
-    viewDepartments: viewDepartments
+    addDepartment, viewDepartments
 }
