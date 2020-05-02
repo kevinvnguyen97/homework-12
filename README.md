@@ -5,6 +5,9 @@ This application displays a list of employees, roles, salaries, and departments 
 ## Table of Contents
 * [Installation](#installation)
 * [Usage](#usage)
+* [Credits](#credits)
+* [License](#license)
+* [Contributing](#contributing)
 
 ## Installation
 
