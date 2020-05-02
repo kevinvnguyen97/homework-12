@@ -44,38 +44,31 @@ function addRole() {
 function viewRoles() {
     server.connection.query("(SELECT role.id, role.title, role.salary, department.name AS department FROM (role LEFT JOIN department ON role.department_id = department.id))", function (err, res) {
         if (err) throw err;
+        console.log();
         console.table(res);
         mainPrompt.mainMenu();
     });
 }
 
-// server.connection.query("SELECT role.title from role", function(err, res) {
-//     if (err) throw err;
-//     console.log(res);
-// });
-
-function editRole() {
-    server.connection.query("SELECT role.title from role", function(err, res) {
+function updateRole() {
+    server.connection.query("SELECT role.title FROM role", function(err, res) {
         if (err) throw err;
         console.log(res);
 
         var roleChoices = [];
-
         res.forEach(roleObj => roleChoices.push(roleObj.title));
-
-        console.log(roleChoices);
 
         inquirer.prompt([
             {
                 type: "list",
-                message: "Select role to edit:",
+                message: "Select role to update:",
                 name: "roleTitle",
                 choices: roleChoices
             },
     
             {
                 type: "confirm",
-                message: "Edit role name?:",
+                message: "Update role name?:",
                 name: "changeRoleName"
             },
     
@@ -90,7 +83,7 @@ function editRole() {
     
             {
                 type: "confirm",
-                message: "Edit role salary?:",
+                message: "Update role salary?:",
                 name: "changeRoleSalary"
             },
     
@@ -105,7 +98,7 @@ function editRole() {
     
             {
                 type: "confirm",
-                message: "Edit role department id?:",
+                message: "Update role department id?:",
                 name: "changeRoleDepartmentId"
             },
     
@@ -123,6 +116,12 @@ function editRole() {
             if (response.changeRoleName) updateCols["title"] = response.newRoleName;
             if (response.changeRoleSalary) updateCols["salary"] = response.newRoleSalary;
             if (response.changeRoleDepartmentId) updateCols["department_id"] = response.newRoleDepartmentId;
+            if (!(response.changeRoleName && response.changeRoleSalary && response.changeRoleDepartmentId)) {
+                console.log();
+                console.log("No changes made to this role!");
+                console.log();
+                mainPrompt.mainMenu();
+            }
     
             server.connection.query(
                 "UPDATE role SET ? WHERE ?",
@@ -139,4 +138,4 @@ function editRole() {
     });
 }
 
-module.exports = {addRole, viewRoles, editRole}
+module.exports = {addRole, viewRoles, updateRole}

@@ -144,25 +144,35 @@ function updateEmployeeManager() {
 }
 
 function removeEmployee() {
-    inquirer.prompt([
-        {
-            type: "number",
-            message: "Enter id of employee to remove:",
-            name: "removeEmployeeId"
-        }
-    ]).then(function (response) {
-        server.connection.query(
-            "DELETE FROM employee WHERE ?",
+    server.connection.query("SELECT first_name, last_name FROM employee", function(err, res) {
+        if (err) throw err;
+        var employeeChoices = [];
+        res.forEach(employeeObj => employeeChoices.push(`${employeeObj.first_name} ${employeeObj.last_name}`));
+
+        inquirer.prompt([
             {
-                id: response.removeEmployeeId
-            },
-            function (err, res) {
-                if (err) throw err;
-                console.log();
-                console.log(res.changedRows + "Employee deleted!");
-                console.log();
-                mainPrompt.mainMenu();
-            });
+                type: "list",
+                message: "Select employee to remove:",
+                name: "employeeName",
+                choices: employeeChoices
+            }
+        ]).then(function (response) {
+            response.employeeName = response.employeeName.split(" ");
+            server.connection.query(
+                "DELETE FROM employee WHERE ? AND ?",
+                [
+                    {first_name: response.employeeName[0]},
+                    {last_name: response.employeeName[1]}
+                ],
+                function (err, res) {
+                    if (err) throw err;
+                    console.log();
+                    console.log("Employee deleted!");
+                    console.log();
+                    mainPrompt.mainMenu();
+                }
+            );
+        });
     });
 }
 

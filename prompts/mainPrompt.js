@@ -3,6 +3,12 @@ const employeePrompt = require("./employeePrompt");
 const rolePrompt = require("./rolePrompt");
 const departmentPrompt = require("./departmentPrompt");
 
+function title() {
+    console.log("Kevin's Employee Tracker");
+    console.log();
+    mainMenu();
+}
+
 function mainMenu() {
     inquirer.prompt([
         {
@@ -19,7 +25,7 @@ function mainMenu() {
                 "Update Employee Manager",
                 "View All Roles",
                 "Add Role",
-                "Edit Role",
+                "Update Role",
                 "View All Departments",
                 "Add Department",
                 "EXIT APPLICATION"
@@ -63,8 +69,8 @@ function mainMenu() {
                 rolePrompt.addRole();
                 break;
 
-            case "Edit Role":
-                rolePrompt.editRole();
+            case "Update Role":
+                rolePrompt.updateRole();
                 break;
 
             case "View All Departments":
@@ -82,4 +88,5 @@ function mainMenu() {
     });
 }
 
+exports.title = title;
 exports.mainMenu = mainMenu;

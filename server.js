@@ -1,9 +1,5 @@
 var mysql = require("mysql");
 var mainPrompt = require("./prompts/mainPrompt");
-var inquirer = require("inquirer");
-
-console.log("Kevin's Employee Tracker");
-console.log();
 
 var connection = mysql.createConnection({
   host: "localhost",
@@ -23,5 +19,5 @@ connection.connect(function (err) {
   if (err) throw err;
   console.log("connected as id " + connection.threadId + "\n");
   exports.connection = connection;
-  mainPrompt.mainMenu();
+  mainPrompt.title();
 });
