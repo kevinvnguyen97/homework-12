@@ -1,12 +1,7 @@
 var mysql = require("mysql");
 var mainPrompt = require("./prompts/mainPrompt");
 
-var connection;
-if (process.env.JAWSDB_URL) {
-  connection = mysql.createConnection(process.env.JAWSDB_URL);
-}
-else {
-  connection = mysql.createConnection({
+var connection = mysql.createConnection({
     host: "localhost",
 
     // Your port; if not 3306
@@ -18,8 +13,7 @@ else {
     // Your password
     password: "root",
     database: "employee_db"
-  });
-}
+});
 
 connection.connect(function (err) {
   if (err) throw err;
