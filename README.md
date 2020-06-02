@@ -1,4 +1,4 @@
-# Homework 12: Employee Tracker
+# Homework 12: Employee Tracker App
 
 This application displays a list of employees, roles, salaries, and departments in a command prompt, allowing easy tracking and editing of employee information.
 
